@@ -1,7 +1,7 @@
 {
   "name": "vite_deploy_01",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "scripts": {
     "dev": "vite",
