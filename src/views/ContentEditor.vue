@@ -1,5 +1,5 @@
 <template>
-  <div class="editor-container">
+  <div :class="{ 'editor-container': isEditing, 'view-mode': !isEditing }">
     <div class="toolbar">
       <button @click="createNewContent" :disabled="isEditing">New Content</button>
       <button @click="saveContent" v-if="isEditing" :disabled="isSaving">
@@ -12,9 +12,9 @@
 
     <div class="content-list" v-if="!isEditing && !isLoading">
       <div v-for="item in savedContents" :key="item.id" class="content-item">
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.content.substring(0, 100) }}...</p>
-        <small>Last edited: {{ new Date(item.lastEdited).toLocaleString() }}</small>
+        <h2>{{ item.title }}</h2>
+        <div>{{ item.content }}</div>
+        <!-- <small>Last edited: {{ new Date(item.lastEdited).toLocaleString() }}</small> -->
         <div class="item-actions">
           <button @click="editContent(item)">Edit</button>
           <button @click="deleteContent(item.id)">Delete</button>
@@ -65,6 +65,15 @@ const createNewContent = () => {
   currentContent.content = ''
   currentContent.lastEdited = null
   isEditing.value = true
+}
+
+const formatContentWithLinks = (content) => {
+  // Regex to find markdown-style links: [text](url)
+  return content.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, (match, text, url) => {
+    // Validate URL
+    const validUrl = /^(https?:\/\/)/i.test(url) ? url : `https://${url}`
+    return `<a href="${validUrl}" target="_blank">${text}</a>`
+  })
 }
 
 const saveContent = async () => {
@@ -138,7 +147,8 @@ onMounted(() => {
         // Convert Firebase object to array with IDs
         savedContents.value = Object.entries(data).map(([id, content]) => ({
           id,
-          ...content
+          ...content,
+          formattedContent: formatContentWithLinks(content.content)
         }))
       } else {
         savedContents.value = []
@@ -161,9 +171,28 @@ onUnmounted(() => {
 
 <style scoped>
 .editor-container {
-  max-width: 800px;
+  /* max-width: 800px; */
   margin: 0 auto;
   padding: 20px;
+  background-color: black;
+}
+
+.view-mode {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: black;
+}
+
+.link-format-guide {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #666;
 }
 
 .toolbar {
@@ -193,7 +222,7 @@ onUnmounted(() => {
 
 .content-item {
   padding: 15px;
-  border: 1px solid #ddd;
+  border: 2px solid #111010;
   border-radius: 4px;
 }
 
@@ -251,5 +280,18 @@ onUnmounted(() => {
 .error-message {
   background-color: #ffebee;
   color: #c62828;
+}
+
+h2 {
+  border-bottom: 1px solid black;
+  color: antiquewhite;
+  font-weight: bolder;
+}
+
+div {
+  font-weight: normal;
+  color: white;
+  margin-top: 10px;
+  white-space: pre-wrap;
 }
 </style>
